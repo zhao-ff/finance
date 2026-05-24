@@ -5,7 +5,6 @@
 ## 安装
 
 ```bash
-cd finance-skill
 npm install
 
 # 可选：链接到全局命令
@@ -53,6 +52,15 @@ finance szse-bulletin -c 000001 -b annual -P
 
 # 搜索含"年度"的公告
 finance szse-bulletin -t 年度 -P
+
+# 统一查询上交所和深交所公告
+finance bulletin -c 600519 -P
+
+# 只查询上交所
+finance bulletin -x sse -c 600009 -P
+
+# 下载公告PDF到指定目录
+finance bulletin -c 600519 -d ./downloads
 
 # 列出暂存的历史数据
 finance list
@@ -200,6 +208,61 @@ Options:
 - `-f, --format <format>`: 输出格式: json, ndjson (默认: json)
 - `-P, --pretty`: 格式化输出 JSON
 
+### `finance bulletin`
+
+统一查询上交所和深交所公告。
+
+```bash
+finance bulletin [options]
+```
+
+Options:
+- `-c, --code <code>`: 股票代码 (如: 600519)
+- `-s, --start-date <date>`: 开始日期 (YYYY-MM-DD)，默认当天前3个月
+- `-e, --end-date <date>`: 结束日期 (YYYY-MM-DD)，默认当天
+  - 注意：开始时间和结束时间的间隔不能超过三个月
+- `-x, --exchange <type>`: 交易所: sse, szse, all (默认: all)
+- `-b, --bulletin-type <type>`: 公告类型（跨交易所通用）
+  - `annual` - 年报
+  - `q1` - 一季报
+  - `mid` - 半年报
+  - `q3` - 三季报
+  - `sharechange` - 股东增减持/股权变动
+  - `risk` - 风险警示
+  - `suspend` - 停复牌 (仅上交所)
+  - `major` - 重大事项 (仅上交所)
+  - `repurchase` - 回购股份 (仅上交所)
+  - `restructuring` - 重大资产重组 (仅上交所)
+  - `performance` - 业绩预告 (仅上交所)
+  - `periodic` - 定期报告全部 (仅上交所)
+  - `ipo` - 首次公开发行 (仅深交所)
+- `-t, --title <keyword>`: 标题模糊搜索
+- `--page-size <n>`: 每页条数 (默认: "25")
+- `--page-no <n>`: 页码 (默认: "1")
+- `-d, --download <dir>`: 下载PDF附件到指定目录
+- `-o, --output <file>`: 输出文件路径
+- `-f, --format <format>`: 输出格式: json, ndjson (默认: json)
+- `-P, --pretty`: 格式化输出 JSON
+
+示例：
+
+```bash
+# 查询上交所公告
+finance bulletin -x sse -c 600009 -P
+
+# 查询深交所公告
+finance bulletin -x szse -c 000001 -P
+
+# 同时查询两个交易所（默认）
+finance bulletin -c 600519 -P
+
+# 下载公告PDF
+finance bulletin -c 600009 -s 2026-05-01 -e 2026-05-24 -d ./pdf
+```
+
+> **注意**: 上交所公告 PDF 下载时会自动绕过 Tengine WAF 反爬（阿里云 acw_tc JS 挑战），
+> 通过 Node.js 执行挑战 JS 计算出 `acw_sc__v2` cookie 后重新请求获取真实 PDF，无需 Puppeteer/Chrome。
+
 ### `finance list`
 
 列出暂存的历史数据。
@@ -209,7 +272,7 @@ finance list [options]
 ```
 
 Options:
-- `-t, --type <type>`: 过滤类型: fastnews, events, qa, news, reports, sse-bulletin
+- `-t, --type <type>`: 过滤类型: fastnews, events, qa, news, reports, sse-bulletin, szse-bulletin, bulletin
 - `--since <date>`: 只显示指定日期之后的数据 (YYYY-MM-DD)
 
 ## 数据暂存
@@ -229,6 +292,7 @@ finance-skill/
 ├── bin/
 │   └── finance.js       # 主入口 CLI
 ├── lib/
+│   ├── bulletin.js      # 统一公告查询（上交所+深交所）
 │   ├── eastmoney/       # 东方财富 API 封装
 │   │   ├── fastnews.js
 │   │   ├── events.js
@@ -237,7 +301,8 @@ finance-skill/
 │   ├── sina/            # 新浪财经 API 封装
 │   │   └── reports.js
 │   ├── sse/             # 上交所 API 封装
-│   │   └── bulletin.js
+│   │   ├── bulletin.js  # 公告查询
+│   │   └── download.js  # PDF 下载（WAF 绕过）
 │   ├── szse/            # 深交所 API 封装
 │   │   └── bulletin.js
 │   ├── storage.js       # 结果暂存模块

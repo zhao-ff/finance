@@ -126,6 +126,27 @@ program
     await bulletin(options);
   });
 
+// 统一公告查询 (上交所 + 深交所)
+program
+  .command('bulletin')
+  .description('查询上交所和深交所公告（统一接口）')
+  .option('-c, --code <code>', '股票代码 (如: 600519)')
+  .option('-s, --start-date <date>', '开始日期 (YYYY-MM-DD)')
+  .option('-e, --end-date <date>', '结束日期 (YYYY-MM-DD)')
+  .option('-x, --exchange <type>', '交易所: sse, szse, all (默认: all)', 'all')
+  .option('-b, --bulletin-type <type>', '公告类型: annual=年报, mid=半年报, q3=三季报, q1=一季报, sharechange=增减持, risk=风险警示, suspend=停复牌(sse), major=重大事项(sse), repurchase=回购(sse), restructuring=重组(sse), performance=业绩(sse), periodic=定期报告(sse), ipo=首发(szse)')
+  .option('-t, --title <keyword>', '标题模糊搜索')
+  .option('--page-size <n>', '每页条数', '25')
+  .option('--page-no <n>', '页码', '1')
+  .option('-d, --download <dir>', '下载PDF附件到指定目录')
+  .option('-o, --output <file>', '输出文件路径')
+  .option('-f, --format <format>', '输出格式: json, ndjson', 'json')
+  .option('-P, --pretty', '格式化输出 JSON')
+  .action(async (options) => {
+    const { bulletin } = await import('../lib/bulletin.js');
+    await bulletin(options);
+  });
+
 // 列出历史数据
 program
   .command('list')
